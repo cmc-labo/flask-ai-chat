@@ -39,7 +39,7 @@ pip install flask psycopg2-binary openai python-dotenv gTTS pydub numpy
 python3 app.py
 ```
 
-The Flask server will start at:
+The Flask server will start at:<br>
 👉 http://127.0.0.1:5000/chat<br>
 👉 http://127.0.0.1:5000/avatar
 
