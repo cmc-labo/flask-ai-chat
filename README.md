@@ -31,7 +31,7 @@ OPENAI_API_KEY=
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install flask psycopg2-binary openai python-dotenv
+pip install flask psycopg2-binary openai python-dotenv gTTS pydub numpy
 ```
 
 ### Step 4. Run Server
@@ -41,13 +41,16 @@ python3 app.py
 
 The Flask server will start at:
 👉 http://127.0.0.1:5000/chat
+👉 http://127.0.0.1:5000/avatar
 
 ### Step 5. Test API
+#### 1. Chat API
 ```
 curl -X POST http://127.0.0.1:5000/chat \
   -H "Content-Type: application/json" \
   -d '{"user_id": "12345", "message": "おはよう！"}'
 ```
+Response:
 
 ```
 {
@@ -55,6 +58,27 @@ curl -X POST http://127.0.0.1:5000/chat \
 }
 ```
 
+#### 2. Avatar API (Chat + TTS + Lip-Sync Data)
+```
+curl -X POST http://127.0.0.1:5000/avatar \
+  -H "Content-Type: application/json" \
+  -d '{"text": "おはよう！"}'
+```
+Response (example):
+
+```
+{
+  "text": "おはようございます！今日も頑張りましょう！",
+  "audio_url": "http://127.0.0.1:5000/audio/output_12345abcd.wav",
+  "lip_sync": [0.0, 0.12, 0.24, ...]
+}
+```
+You can fetch the generated audio file directly:
+```
+curl -O http://127.0.0.1:5000/audio/output_12345abcd.wav
+```
+
 ## Note 
 - The frontend (Flutter app) will call this backend API.
 - Make sure PostgreSQL is running before starting the server.
+- Audio files are generated under the audio/ directory and served via /audio/<filename>.
