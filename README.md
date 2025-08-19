@@ -40,7 +40,7 @@ python3 app.py
 ```
 
 The Flask server will start at:
-👉 http://127.0.0.1:5000/chat
+👉 http://127.0.0.1:5000/chat<br>
 👉 http://127.0.0.1:5000/avatar
 
 ### Step 5. Test API
