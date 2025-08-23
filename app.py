@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, jsonify, send_file, url_for
+from flask import Flask, request, Response, jsonify, send_file, send_from_directory, url_for
 from gtts import gTTS
 from pydub import AudioSegment
 import numpy as np
@@ -6,7 +6,11 @@ import json
 import psycopg2
 import os
 import uuid
+import base64
+import requests
+import replicate
 from openai import OpenAI
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -21,6 +25,11 @@ DB_CONFIG = {
 AUDIO_DIR = "audio_cache"
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
+IMAGE_DIR = "images"
+os.makedirs(IMAGE_DIR, exist_ok=True)
+
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+REPLICATE_MODEL = "google/imagen-4"
 
 def get_db_connection():
     try:
@@ -126,10 +135,58 @@ def avator_response():
 
     return Response(json.dumps(response_data, ensure_ascii=False), mimetype="application/json")
 
+@app.route("/generate_image", methods=["POST"])
+def generate_image():
+    data = request.json
+    prompt = data.get("prompt", "")
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+
+    try:
+        # Replicate SDKでモデル実行
+        client = replicate.Client(api_token=REPLICATE_API_TOKEN)
+        input_data = {
+            "prompt": prompt,
+            "aspect_ratio": "16:9",
+            "safety_filter_level": "block_medium_and_above"
+        }
+
+        output = client.run(REPLICATE_MODEL, input=input_data)
+
+        # output は文字列の URL または文字列 URL のリストとして返る
+        if isinstance(output, list):
+            image_url = output[0]  # 文字列 URL
+        else:
+            image_url = output
+
+        # サーバに保存
+        response = requests.get(image_url)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"image_{timestamp}.png"
+        filepath = os.path.join(IMAGE_DIR, filename)
+        with open(filepath, "wb") as f:
+            f.write(response.content)
+
+        return jsonify({
+            "prompt": prompt,
+            "image_url": url_for("get_image", filename=filename, _external=True),
+            "metadata": {
+                "model": REPLICATE_MODEL,
+                "created": timestamp
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/audio/<filename>", methods=["GET"])
 def get_audio(filename):
     file_path = os.path.join(AUDIO_DIR, filename)
     return send_file(file_path, mimetype="audio/wav")
+
+@app.route("/image/<filename>", methods=["GET"])
+def get_image(filename):
+    return send_from_directory(IMAGE_DIR, filename) 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
