@@ -9,7 +9,9 @@ import uuid
 import base64
 import requests
 import replicate
+import time
 from openai import OpenAI
+from runwayml import RunwayML, TaskFailedError
 from datetime import datetime
 
 app = Flask(__name__)
@@ -28,8 +30,13 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 IMAGE_DIR = "images"
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
+VIDEO_DIR = "videos"
+os.makedirs(VIDEO_DIR, exist_ok=True)
+
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 REPLICATE_MODEL = "google/imagen-4"
+
+RUNWAY_API_KEY = os.getenv("RUNWAY_API_KEY")
 
 def get_db_connection():
     try:
@@ -179,6 +186,61 @@ def generate_image():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/generate_video", methods=["POST"])
+def generate_video():
+    data = request.json
+    prompt_text = data.get("prompt", "")
+    duration = data.get("duration", 1)
+    prompt_image = data.get("prompt_image", None)  # オプションで画像も指定可
+
+    if not prompt_text:
+        return jsonify({"error": "Prompt is required"}), 400
+
+    client = RunwayML(api_key=RUNWAY_API_KEY)
+
+    try:
+        # 画像が指定されていなければ、単純に黒画像などを生成することも可能
+        task = client.image_to_video.create(
+            model='gen4_turbo',
+            prompt_text=prompt_text,
+            prompt_image=prompt_image,  # None でも可
+            ratio='1280:720',
+            duration=duration
+        ).wait_for_task_output()
+
+        # task.output_url で生成された動画の URL が取得可能
+        if isinstance(task.output[0], dict):
+            video_url = task.output[0]['uri']
+        else:
+            video_url = task.output[0] 
+        response = requests.get(video_url)
+
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"video_{timestamp}.mp4"
+        filepath = os.path.join(VIDEO_DIR, filename)
+
+        with open(filepath, "wb") as f:
+            f.write(response.content)
+
+        return jsonify({
+            "prompt": prompt_text,
+            "video_url": url_for("get_video", filename=filename, _external=True),
+            "metadata": {
+                "model": "gen4_turbo",
+                "duration": duration,
+                "created": timestamp
+            }
+        })
+
+    except TaskFailedError as e:
+        return jsonify({
+            "error": "Video generation failed",
+            "details": e.task_details
+        }), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/audio/<filename>", methods=["GET"])
 def get_audio(filename):
     file_path = os.path.join(AUDIO_DIR, filename)
@@ -187,6 +249,13 @@ def get_audio(filename):
 @app.route("/image/<filename>", methods=["GET"])
 def get_image(filename):
     return send_from_directory(IMAGE_DIR, filename) 
+
+@app.route("/video/<filename>", methods=["GET"])
+def get_video(filename):
+    filepath = os.path.join(VIDEO_DIR, filename)
+    if not os.path.exists(filepath):
+        return jsonify({"error": "File not found"}), 404
+    return send_file(filepath, mimetype="video/mp4")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
