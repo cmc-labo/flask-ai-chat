@@ -128,7 +128,9 @@ Response (example):
   }
 }
 ```
-[![Sample Video](https://hpscript.s3.ap-northeast-1.amazonaws.com/astronaut_house.png)](https://hpscript.s3.ap-northeast-1.amazonaws.com/spacecraft.mp4)
+<a href="https://hpscript.s3.ap-northeast-1.amazonaws.com/spacecraft.mp4">
+  <img src="https://hpscript.s3.ap-northeast-1.amazonaws.com/space_craft.png" width="50%">
+</a>
 - The generated video is saved in the videos/ directory on the server.
 - You can access it directly via the returned video_url.
 - Note: duration must be 5 or 10 seconds due to API constraints.
