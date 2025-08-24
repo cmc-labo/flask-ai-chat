@@ -45,6 +45,7 @@ The Flask server will start at:<br>
 👉 http://127.0.0.1:5000/chat<br>
 👉 http://127.0.0.1:5000/avatar<br>
 👉 http://127.0.0.1:5000/generate_image<br>
+👉 http://127.0.0.1:5000/understand_image<br>
 👉 http://127.0.0.1:5000/generate_video<br>
 
 
@@ -127,7 +128,7 @@ Response (example):
 }
 ```
 <img src="https://hpscript.s3.ap-northeast-1.amazonaws.com/dog.jpg" width="50%">
-- The API accepts any image URL and a question in Japanese or English.
+- The API accepts any image URL and a question in Japanese or English.<br>
 - The response contains the AI’s answer and metadata including the model used and timestamp.
 
 #### 5. Generate Video API
