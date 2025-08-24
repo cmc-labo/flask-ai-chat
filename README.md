@@ -128,10 +128,7 @@ Response (example):
   }
 }
 ```
-<video controls width="60%">
-  <source src="https://hpscript.s3.ap-northeast-1.amazonaws.com/spacecraft.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+[![Sample Video](https://hpscript.s3.ap-northeast-1.amazonaws.com/astronaut_house.png)](https://hpscript.s3.ap-northeast-1.amazonaws.com/spacecraft.mp4)
 - The generated video is saved in the videos/ directory on the server.
 - You can access it directly via the returned video_url.
 - Note: duration must be 5 or 10 seconds due to API constraints.
