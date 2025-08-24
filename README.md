@@ -101,6 +101,7 @@ Response (example):
   }
 }
 ```
+<img src="https://hpscript.s3.ap-northeast-1.amazonaws.com/astronaut_house.png" alt="sample image" width="50%">
 - The generated images are saved in the images/ directory on the server.
 - You can access them directly via the returned image_url.
 
@@ -127,6 +128,10 @@ Response (example):
   }
 }
 ```
+<video controls width="60%">
+  <source src="https://hpscript.s3.ap-northeast-1.amazonaws.com/spacecraft.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 - The generated video is saved in the videos/ directory on the server.
 - You can access it directly via the returned video_url.
 - Note: duration must be 5 or 10 seconds due to API constraints.
