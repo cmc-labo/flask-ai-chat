@@ -44,6 +44,7 @@ python3 app.py
 The Flask server will start at:<br>
 👉 http://127.0.0.1:5000/chat<br>
 👉 http://127.0.0.1:5000/avatar<br>
+👉 http://127.0.0.1:5000/understand_audio<br>
 👉 http://127.0.0.1:5000/generate_image<br>
 👉 http://127.0.0.1:5000/understand_image<br>
 👉 http://127.0.0.1:5000/generate_video<br>
@@ -84,7 +85,24 @@ You can fetch the generated audio file directly:
 curl -O http://127.0.0.1:5000/audio/output_12345abcd.wav
 ```
 
-#### 3. Generate Image API
+#### 3. Avatar API (Chat + TTS + Lip-Sync Data)
+Understand the content of an audio file and return a text answer using **OpenAI GPT-4o-mini**.
+```
+curl -X POST http://127.0.0.1:5000/understand_audio \
+  -H "Content-Type: application/json" \
+  -d '{
+        "audio_url": "https://hpscript.s3.ap-northeast-1.amazonaws.com/voice.wav"
+      }'
+```
+Response (example):
+```
+{"transcript": "AIチャットでよく聞かれることは何ですか?", "answer": "AIチャットでよく聞かれることはいくつかありますが、以下のような質問が一般的です。\n\n1. **情報提供**:\n   - 歴史的な出来事や文化に関する質問\n   - 科学や技術に関する基本的な情報\n\n2. **助言や提案**:\n   - 健康や生活に関するアドバイス\n   - 学習方法やキャリアに関する相談\n\n3. **トラブルシューティング**:\n   - コンピュータやソフトウェアの問題解決\n   - 日常生活でのトラブルへの対処法\n\n4. **エンターテイメント**:\n   - 映画や本のおすすめ\n   - ジョークやクイズ\n\n5. **雑学や豆知識**:\n   - 面白い事実や trivia\n   - 特定のテーマに関する詳細\n\n6. **技術的な質問**:\n   - プログラミングやコンピュータサイエンスに関する質問\n   - AIや機械学習の仕組み\n\nこれらの質問に対して、できる限り正確かつ詳細な情報を提供することが求められます。", "metadata": {"model": "gpt-4o-mini", "created": "20250824032605"}}
+```
+- The `transcript` field contains the text of the spoken content in the audio file.  
+- The `answer` field contains the model's response to the content of the audio.  
+- Metadata includes the model name and timestamp of generation.  
+
+#### 4. Generate Image API
 Generate images from text prompts using **Replicate API (Google/Imagen-4)**.
 ```
 curl -X POST http://127.0.0.1:5000/generate_image \
@@ -106,7 +124,7 @@ Response (example):
 - The generated images are saved in the images/ directory on the server.
 - You can access them directly via the returned image_url.
 
-#### 4. Understand Image API
+#### 5. Understand Image API
 Analyze an image and ask questions about it using OpenAI GPT-4o-mini.
 ```
 curl -X POST http://127.0.0.1:5000/understand_image \
@@ -131,7 +149,7 @@ Response (example):
 - The API accepts any image URL and a question in Japanese or English.<br>
 - The response contains the AI’s answer and metadata including the model used and timestamp.
 
-#### 5. Generate Video API
+#### 6. Generate Video API
 Generate short videos from an image + text prompt using Runway API (gen4_turbo).
 ```
 curl -X POST http://127.0.0.1:5000/generate_video \

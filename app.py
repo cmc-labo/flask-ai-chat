@@ -142,6 +142,49 @@ def avator_response():
 
     return Response(json.dumps(response_data, ensure_ascii=False), mimetype="application/json")
 
+@app.route("/understand_audio", methods=["POST"])
+def understand_audio():
+    try:
+        data = request.json
+        audio_url = data.get("audio_url", "")
+
+        if not audio_url:
+            return jsonify({"error": "Audio URL is required"}), 400
+
+        audio_response = requests.get(audio_url)
+        audio_path = "/tmp/temp_audio.wav"
+        with open(audio_path, "wb") as f:
+            f.write(audio_response.content)
+
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        transcript_resp = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=open(audio_path, "rb")
+        )
+        transcript = transcript_resp.text
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": transcript}]
+        )
+        answer = response.choices[0].message.content
+
+        return Response(
+            json.dumps({
+                "transcript": transcript,
+                "answer": answer,
+                "metadata": {
+                    "model": "gpt-4o-mini",
+                    "created": datetime.now().strftime("%Y%m%d%H%M%S")
+                }
+            }, ensure_ascii=False),
+            mimetype="application/json"
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/generate_image", methods=["POST"])
 def generate_image():
     data = request.json
