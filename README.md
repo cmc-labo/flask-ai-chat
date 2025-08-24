@@ -105,7 +105,32 @@ Response (example):
 - The generated images are saved in the images/ directory on the server.
 - You can access them directly via the returned image_url.
 
-#### 4. Generate Video API
+#### 4. Understand Image API
+Analyze an image and ask questions about it using OpenAI GPT-4o-mini.
+```
+curl -X POST http://127.0.0.1:5000/understand_image \
+  -H "Content-Type: application/json" \
+  -d '{
+        "question": "この犬の犬種は何ですか？",
+        "image_url": "https://hpscript.s3.ap-northeast-1.amazonaws.com/dog.jpg"
+      }'
+```
+Response (example):
+```
+{
+  "question": "この犬の犬種は何ですか？",
+  "answer": "この犬はアラスカン・マラミュートという犬種のようです。大型で力強い犬で、主にそり引きとして飼育されています。特徴的な毛色と穏やかな性格が魅力です。",
+  "metadata": {
+    "model": "gpt-4o-mini",
+    "created": "20250824022922"
+  }
+}
+```
+<img src="https://hpscript.s3.ap-northeast-1.amazonaws.com/dog.jpg" width="50%">
+- The API accepts any image URL and a question in Japanese or English.
+- The response contains the AI’s answer and metadata including the model used and timestamp.
+
+#### 5. Generate Video API
 Generate short videos from an image + text prompt using Runway API (gen4_turbo).
 ```
 curl -X POST http://127.0.0.1:5000/generate_video \

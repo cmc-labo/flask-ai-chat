@@ -186,6 +186,46 @@ def generate_image():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/understand_image", methods=["POST"])
+def understand_image():
+    try:
+        data = request.json
+        image_url = data.get("image_url", "")
+        if not image_url:
+            return jsonify({"error": "Image URL is required"}), 400
+        question = data.get("question", "この画像について説明してください。")
+
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}}
+                    ]
+                }
+            ]
+        )
+
+        answer = response.choices[0].message.content
+
+        return Response(
+            json.dumps({
+                "question": question,
+                "answer": answer,
+                "metadata": {
+                    "model": "gpt-4o-mini",
+                    "created": datetime.now().strftime("%Y%m%d%H%M%S")
+                }
+            }, ensure_ascii=False),
+            mimetype="application/json; charset=utf-8"
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/generate_video", methods=["POST"])
 def generate_video():
     data = request.json
