@@ -1,6 +1,15 @@
 ## **flutter-ai-chat-backend**
-This is the backend source code for the AI chat app using **Flask + PostgreSQL + OpenAI API + Replicate API (Google/Imagen-4) + Runway API (gen4_turbo)**.  
-It receives chat messages from the frontend (Flutter, iOS/Android) and returns AI-generated responses or media.
+This is the backend source code for a **multifunctional AI chat application** built with **Flask + PostgreSQL** and integrated with several AI services including **OpenAI API, Replicate API (Google/Imagen-4), and Runway API (gen4_turbo)**.
+
+The server handles a variety of AI-driven tasks for the frontend (Flutter, iOS, Android), including:
+
+- Text-based chat responses using GPT models
+- Image generation and analysis
+- Audio transcription and understanding
+- Video generation from images and text prompts
+- Multimodal processing that combines text, images, and audio
+
+It provides a unified API to send user inputs and receive AI-generated content, making it a versatile backend for chatbots, virtual avatars, and multimedia AI applications.
 
 
 ## **Setup**
@@ -48,6 +57,7 @@ The Flask server will start at:<br>
 👉 http://127.0.0.1:5000/generate_image<br>
 👉 http://127.0.0.1:5000/understand_image<br>
 👉 http://127.0.0.1:5000/generate_video<br>
+👉 http://127.0.0.1:5000/multimodal<br>
 
 
 ### Step 5. Test API
@@ -179,6 +189,50 @@ Response (example):
 - The generated video is saved in the videos/ directory on the server.
 - You can access it directly via the returned video_url.
 - Note: duration must be 5 or 10 seconds due to API constraints.
+
+#### 7. Multimodal API (Text + Image + Audio)
+Analyze text, images, and audio simultaneously using OpenAI GPT-4o-mini.
+- text → question or instruction
+- image_url → image URL
+- audio_url → audio URL (mp3/wav)
+```
+curl -X POST http://127.0.0.1:5000/multimodal \
+  -H "Content-Type: application/json" \
+  -d '{
+        "text": "猫について説明してください",
+        "image_url": "https://hpscript.s3.ap-northeast-1.amazonaws.com/cat.jpg",
+        "audio_url": "https://hpscript.s3.ap-northeast-1.amazonaws.com/cat_voice.mp3"
+      }'
+```
+Response (example):
+```
+{
+  "image_analysis": {
+    "question": "猫について説明してください",
+    "answer": "猫は、小型の霊長類に属する哺乳動物で、特に家畜として人気があります。彼らは独立心が強く、警戒心もある一方で、愛情深く飼い主と強い絆を結ぶことができます。\n\n### 基本的な特徴\n\n- **体型**: スリムで柔軟、俊敏な体を持ち、約3〜5キログラムから10キログラム程度の大きさ。\n- **被毛**: 短毛種と長毛種があり、さまざまな色と模様があります。\n- **感覚**: 優れた視覚と聴覚を持ち、夜行性で、夜間でもよく見えます。\n\n### 行動\n\n- **社会性**: 一般的に、猫は独りで過ごすのが好きですが、一緒に遊んだり過ごしたりすることで、社会的な結びつきを形成します。\n- **習性**: 獲物を捕まえるための狩猟本能を持ち、遊ぶことを通じてこの本能を発揮します。\n\n### 飼い方\n\n- **飼育環境**: 家庭内での飼育に適し、必要な環境を整えることで健康的に育てることができます。\n- **食事**: 肉食性で、猫用の餌を提供することが重要です。\n\n多くの家庭で愛される存在であり、ストレスを軽減する効果もあるとされています。",
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "created": "20250824202654"
+    }
+  },
+  "audio_analysis": {
+    "transcript": "Meow!",
+    "answer": "「ニャー！」という猫の鳴き声を表現しています。これは猫が自分の存在を知らせたり、何かを要求したりする際によく使う音です。",
+    "metadata": {
+      "model": "gpt-4o-mini",
+      "created": "20250824202658"
+    }
+  },
+  "text_response": {
+    "answer": "テキスト入力『猫について説明してください』に基づき応答します。"
+  }
+}
+```
+- image_analysis.answer → AI explanation based on the image
+- audio_analysis.transcript → Transcribed text from the audio
+- audio_analysis.answer → Japanese/English explanation of the audio content
+- text_response.answer → Response based on the input text
+- Supports Japanese and English, with proper UTF-8 encoding
 
 ## Note 
 - The frontend (Flutter app) will call this backend API.

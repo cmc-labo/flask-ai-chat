@@ -340,5 +340,78 @@ def get_video(filename):
         return jsonify({"error": "File not found"}), 404
     return send_file(filepath, mimetype="video/mp4")
 
+def process_understand_image(image_url, question="この画像について説明してください。"):
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user",
+             "content": [
+                 {"type": "text", "text": question},
+                 {"type": "image_url", "image_url": {"url": image_url}}
+             ]}
+        ]
+    )
+    return {
+        "question": question,
+        "answer": response.choices[0].message.content,
+        "metadata": {"model": "gpt-4o-mini", "created": datetime.now().strftime("%Y%m%d%H%M%S")}
+    }
+
+def process_understand_audio(audio_url):
+    audio_file = requests.get(audio_url)
+    filename = "temp_audio.mp3" 
+    with open(filename, "wb") as f:
+        f.write(audio_file.content)
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    with open(filename, "rb") as f:
+        transcript = client.audio.transcriptions.create(
+            model="gpt-4o-mini-transcribe",
+            file=f
+        )
+    text = transcript.text
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "これから入力される音声テキストを日本語で説明してください。"},
+            {"role": "user", "content": text}
+        ]
+    )
+
+    return {
+        "transcript": text,
+        "answer": response.choices[0].message.content,
+        "metadata": {
+            "model": "gpt-4o-mini",
+            "created": datetime.now().strftime("%Y%m%d%H%M%S")
+        }
+    }
+
+
+@app.route("/multimodal", methods=["POST"])
+def multimodal():
+    data = request.json
+    text = data.get("text")
+    image_url = data.get("image_url")
+    audio_url = data.get("audio_url")
+
+    results = {}
+
+    if image_url:
+        results["image_analysis"] = process_understand_image(image_url, text or "この画像について説明してください。")
+
+    if audio_url:
+        results["audio_analysis"] = process_understand_audio(audio_url)
+
+    if text:
+        results["text_response"] = {"answer": f"テキスト入力『{text}』に基づき応答します。"}
+
+    return Response(
+        json.dumps(results, ensure_ascii=False, indent=2),
+        mimetype="application/json; charset=utf-8"
+    )
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
